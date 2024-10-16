@@ -1,0 +1,13 @@
+[Scheduler] users_count: 2, port_bandwidth: 2
+
+[Slice #0] count: 3, bandwidth: 1, max_delay: 30000
+[Packet #0] size: 0, arrival: 8000
+[Packet #1] size: 1000, arrival: 16000
+[Packet #2] size: 3000, arrival: 8000
+
+[Slice #1] count: 3, bandwidth: 1, max_delay: 30000
+[Packet #0] size: 0, arrival: 8000
+[Packet #1] size: 1000, arrival: 16000
+[Packet #2] size: 3000, arrival: 8000
+
+[Scheduler] scheduling
