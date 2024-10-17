@@ -1,6 +1,6 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -43,12 +43,17 @@ public:
         return slice;
     }
 
+    bool operator<(const std::shared_ptr<Packet>& packet) const
+    {
+        return arrival < packet->arrival;
+    }
+
 private:
-    int slice;     ///< slice id
-    int id;        ///< packet id
-    int size;      ///< packet size (PktSize)
-    int arrival;   ///< arrival of the last bit of the packet (ts)
-    int leave = 0; ///< leave time of the first bit of the packet (te)
+    int slice;      ///< slice id
+    int id;         ///< packet id
+    int size;       ///< packet size (PktSize)
+    int arrival;    ///< arrival of the last bit of the packet (ts)
+    int leave = -1; ///< leave time of the first bit of the packet (te)
 };
 
 class Slice
@@ -74,14 +79,17 @@ public:
         return packets[i];
     }
 
-    std::shared_ptr<Packet> next(int round, int time)
+    std::shared_ptr<Packet> next(int time)
     {
-        if(packets.empty() || round >= packets.size() || time < packets[round]->get_arrival())
+        for(auto& packet: packets)
         {
-            return nullptr;
+            if(packet->get_leave() == -1)
+            {
+                return packet;
+            }
         }
 
-        return packets[round];
+        return nullptr;
     }
 
     int get_id() const
@@ -116,26 +124,32 @@ public:
 
         while(true)
         {
-            bool added = false;
+            std::vector<std::shared_ptr<Packet>> packets;
             for(auto& slice: slices)
             {
-                auto packet = slice.next(round, time);
+                auto packet = slice.next(time);
 
                 if(packet)
                 {
-                    auto duration = packet->get_size() / port_bandwidth;
-
-                    packet->set_leave(time);
-                    time += duration;
-
-                    sequence.emplace_back(packet);
-                    added = true;
+                    packets.emplace_back(packet);
                 }
             }
 
-            if(!added)
+            if(packets.empty())
             {
                 break;
+            }
+
+            time = std::max(time, (*std::min_element(packets.begin(), packets.end(), [](const std::shared_ptr<Packet>& a, const std::shared_ptr<Packet>& b) { return a->get_arrival() < b->get_arrival(); }))->get_arrival());
+
+            for(auto& packet: packets)
+            {
+                auto duration = packet->get_size() / port_bandwidth;
+
+                packet->set_leave(time);
+                time += duration;
+
+                sequence.emplace_back(packet);
             }
 
             round++;
