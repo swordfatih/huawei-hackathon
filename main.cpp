@@ -3,10 +3,12 @@
 #include <string>
 #include <vector>
 
+class Slice; // forward declaration
+
 class Packet
 {
 public:
-    Packet(int id, std::istream& in) : id(id)
+    Packet(int id, Slice* slice, std::istream& in) : id(id), slice(slice)
     {
         in >> size >> arrival;
     }
@@ -17,10 +19,12 @@ public:
     }
 
 private:
-    int id;      ///< packet id
-    int size;    ///< packet size (PktSize)
-    int arrival; ///< arrival of the last bit of the packet (ts)
-    int leave;   ///< leave time of the first bit of the packet (te)
+    Slice* slice;   ///< slice reference
+    int    id;      ///< packet id
+    int    size;    ///< packet size (PktSize)
+    int    arrival; ///< arrival of the last bit of the packet (ts)
+    int    leave;   ///< leave time of the first bit of the packet (te)
+    int    time;    ///< packet transmission time (t / PortBW)
 };
 
 class Slice
@@ -32,7 +36,7 @@ public:
 
         for(int i = 0; i < count; ++i)
         {
-            sequence.emplace_back(i, in);
+            sequence.emplace_back(i, this, in);
         }
     }
 
