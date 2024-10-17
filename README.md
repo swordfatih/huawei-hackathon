@@ -5,7 +5,7 @@
 1. Compile
 
 ```bash
-g++ ./main.cpp -o scheduler -Werror
+g++ ./main.cpp -o scheduler -Werror --std=c++11
 ```
 
 2. Run
