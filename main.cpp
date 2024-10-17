@@ -1,50 +1,67 @@
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <memory>
 #include <string>
 #include <vector>
-
-class Slice; // forward declaration
 
 class Packet
 {
 public:
-    Packet(int id, Slice* slice, std::istream& in) : id(id), slice(slice)
+    Packet(int id, int slice, std::istream& in) : id(id), slice(slice)
     {
-        in >> size >> arrival;
-
-        time = size / slice->get_scheduler()->get_bandwidth();
+        in >> arrival >> size;
     }
 
-    std::string to_string() const
+    int get_arrival() const
     {
-        return "[Packet #" + std::to_string(id) + "] size: " + std::to_string(size) + ", arrival: " + std::to_string(arrival);
+        return arrival;
+    }
+
+    void set_leave(int leave)
+    {
+        this->leave = leave;
+    }
+
+    int get_size() const
+    {
+        return size;
+    }
+
+    int get_leave() const
+    {
+        return leave;
+    }
+
+    int get_id() const
+    {
+        return id;
+    }
+
+    int get_slice() const
+    {
+        return slice;
     }
 
 private:
-    Slice* slice;   ///< slice reference
-    int    id;      ///< packet id
-    int    size;    ///< packet size (PktSize)
-    int    arrival; ///< arrival of the last bit of the packet (ts)
-    int    leave;   ///< leave time of the first bit of the packet (te)
-    int    time;    ///< packet transmission time (t / PortBW)
+    int slice;     ///< slice id
+    int id;        ///< packet id
+    int size;      ///< packet size (PktSize)
+    int arrival;   ///< arrival of the last bit of the packet (ts)
+    int leave = 0; ///< leave time of the first bit of the packet (te)
 };
 
 class Slice
 {
 public:
-    Slice(int id, Scheduler* scheduler, std::istream& in) : id(id), scheduler(scheduler)
+    Slice(int id, std::istream& in) : id(id)
     {
         in >> count >> bandwidth >> max_delay;
 
         for(int i = 0; i < count; ++i)
         {
-            sequence.emplace_back(i, this, in);
+            packets.emplace_back(std::make_shared<Packet>(i, id, in));
         }
-    }
-
-    Scheduler* get_scheduler() const
-    {
-        return scheduler;
     }
 
     int get_bandwidth() const
@@ -52,23 +69,32 @@ public:
         return bandwidth;
     }
 
-    std::string to_string() const
+    std::shared_ptr<Packet> get_packet(int i)
     {
-        std::string str = "[Slice #" + std::to_string(id) + "] count: " + std::to_string(count) + ", bandwidth: " + std::to_string(bandwidth) + ", max_delay: " + std::to_string(max_delay) + "\n";
-        for(const Packet& packet: sequence)
+        return packets[i];
+    }
+
+    std::shared_ptr<Packet> next(int round, int time)
+    {
+        if(packets.empty() || round >= packets.size() || time < packets[round]->get_arrival())
         {
-            str += packet.to_string() + "\n";
+            return nullptr;
         }
-        return str;
+
+        return packets[round];
+    }
+
+    int get_id() const
+    {
+        return id;
     }
 
 private:
-    Scheduler*          scheduler; ///< scheduler reference
-    int                 id;        ///< slice id
-    int                 count;     ///< number of slice packets
-    int                 bandwidth; ///< slice bandwidth (SliceBWi)
-    int                 max_delay; ///< maximum slice delay tolerance (UBDi)
-    std::vector<Packet> sequence;  ///< slice packets
+    int                                  id;        ///< slice id
+    int                                  count;     ///< number of slice packets
+    int                                  bandwidth; ///< slice bandwidth (SliceBWi)
+    int                                  max_delay; ///< maximum slice delay tolerance (UBDi)
+    std::vector<std::shared_ptr<Packet>> packets;   ///< slice packets
 };
 
 class Scheduler
@@ -76,17 +102,44 @@ class Scheduler
 public:
     Scheduler(std::istream& in)
     {
-        in >> users_count >> port_bandwidth;
+        in >> slice_count >> port_bandwidth;
 
-        for(int i = 0; i < users_count; ++i)
+        for(int i = 0; i < slice_count; ++i)
         {
-            slices.emplace_back(i, this, in);
+            slices.emplace_back(i, in);
         }
     }
 
-    void schedule(std::ostream& out)
+    void schedule()
     {
-        out << "[Scheduler] scheduling\n";
+        int time = 0, round = 0, count = 0;
+
+        while(true)
+        {
+            bool added = false;
+            for(auto& slice: slices)
+            {
+                auto packet = slice.next(round, time);
+
+                if(packet)
+                {
+                    auto duration = packet->get_size() / port_bandwidth;
+
+                    packet->set_leave(time);
+                    time += duration;
+
+                    sequence.emplace_back(packet);
+                    added = true;
+                }
+            }
+
+            if(!added)
+            {
+                break;
+            }
+
+            round++;
+        }
     }
 
     int get_bandwidth() const
@@ -96,18 +149,23 @@ public:
 
     std::string to_string() const
     {
-        std::string str = "[Scheduler] users_count: " + std::to_string(users_count) + ", port_bandwidth: " + std::to_string(port_bandwidth) + "\n\n";
-        for(const Slice& slice: slices)
+        std::string str = std::to_string(sequence.size()) + "\n";
+
+        for(auto& packet: sequence)
         {
-            str += slice.to_string() + "\n";
+            str += std::to_string(packet->get_leave()) + " " + std::to_string(slices[packet->get_slice()].get_id()) + " " + std::to_string(packet->get_id()) + " ";
         }
+
+        str.pop_back();
+
         return str;
     }
 
 private:
-    int                users_count = 0;    ///< number of slice users
-    int                port_bandwidth = 0; ///< port bandwidth (PortBW)
-    std::vector<Slice> slices;             ///< slice sequence
+    int                                  slice_count = 0;    ///< number of slice users
+    int                                  port_bandwidth = 0; ///< port bandwidth (PortBW)
+    std::vector<Slice>                   slices;             ///< slices
+    std::vector<std::shared_ptr<Packet>> sequence;           ///< packet sequence
 };
 
 int main(int argc, char* argv[])
@@ -127,14 +185,13 @@ int main(int argc, char* argv[])
         }
     }
 
-    std::istream& in = input_file ? input_file : std::cin;
-    std::ostream& out = output_file ? output_file : std::cout;
+    std::istream& in = input_file.is_open() ? input_file : std::cin;
+    std::ostream& out = output_file.is_open() ? output_file : std::cout;
 
     Scheduler scheduler(in);
+    scheduler.schedule();
 
     out << scheduler.to_string();
-
-    scheduler.schedule(out);
 
     return 0;
 }
