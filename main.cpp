@@ -100,7 +100,7 @@ public:
 private:
     int                                  id;        ///< slice id
     int                                  count;     ///< number of slice packets
-    int                                  bandwidth; ///< slice bandwidth (SliceBWi)
+    float                                bandwidth; ///< slice bandwidth (SliceBWi)
     int                                  max_delay; ///< maximum slice delay tolerance (UBDi)
     std::vector<std::shared_ptr<Packet>> packets;   ///< slice packets
 };
@@ -140,16 +140,22 @@ public:
                 break;
             }
 
-            time = std::max(time, (*std::min_element(packets.begin(), packets.end(), [](const std::shared_ptr<Packet>& a, const std::shared_ptr<Packet>& b) { return a->get_arrival() < b->get_arrival(); }))->get_arrival());
+            time = std::max(time, (*std::min_element(packets.begin(), packets.end(), [](const std::shared_ptr<Packet>& a, const std::shared_ptr<Packet>& b)
+            {
+                return a->get_arrival() < b->get_arrival();
+            }))->get_arrival());
 
             for(auto& packet: packets)
             {
-                auto duration = packet->get_size() / port_bandwidth;
+                if(packet->get_arrival() <= time)
+                {
+                    auto duration = packet->get_size() / port_bandwidth;
 
-                packet->set_leave(time);
-                time += duration;
+                    packet->set_leave(time);
+                    time += duration;
 
-                sequence.emplace_back(packet);
+                    sequence.emplace_back(packet);
+                }
             }
 
             round++;
