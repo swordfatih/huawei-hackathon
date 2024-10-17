@@ -11,6 +11,8 @@ public:
     Packet(int id, Slice* slice, std::istream& in) : id(id), slice(slice)
     {
         in >> size >> arrival;
+
+        time = size / slice->get_scheduler()->get_bandwidth();
     }
 
     std::string to_string() const
@@ -30,7 +32,7 @@ private:
 class Slice
 {
 public:
-    Slice(int id, std::istream& in) : id(id)
+    Slice(int id, Scheduler* scheduler, std::istream& in) : id(id), scheduler(scheduler)
     {
         in >> count >> bandwidth >> max_delay;
 
@@ -38,6 +40,16 @@ public:
         {
             sequence.emplace_back(i, this, in);
         }
+    }
+
+    Scheduler* get_scheduler() const
+    {
+        return scheduler;
+    }
+
+    int get_bandwidth() const
+    {
+        return bandwidth;
     }
 
     std::string to_string() const
@@ -51,6 +63,7 @@ public:
     }
 
 private:
+    Scheduler*          scheduler; ///< scheduler reference
     int                 id;        ///< slice id
     int                 count;     ///< number of slice packets
     int                 bandwidth; ///< slice bandwidth (SliceBWi)
@@ -67,13 +80,18 @@ public:
 
         for(int i = 0; i < users_count; ++i)
         {
-            slices.emplace_back(i, in);
+            slices.emplace_back(i, this, in);
         }
     }
 
     void schedule(std::ostream& out)
     {
         out << "[Scheduler] scheduling\n";
+    }
+
+    int get_bandwidth() const
+    {
+        return port_bandwidth;
     }
 
     std::string to_string() const
