@@ -19,7 +19,8 @@ public:
     std::vector<std::shared_ptr<Packet>> get_all_packets();
     void                                 schedule();
     std::string                          to_string() const;
-    bool                                 check_sequence() const; // Add this line
+    bool                                 check_sequence() const;
+    float                                calculate_score() const;
 
 private:
     int                                  slice_count = 0;    ///< number of slice users

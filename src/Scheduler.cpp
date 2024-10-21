@@ -114,8 +114,9 @@ bool Scheduler::check_sequence() const
         // Check if the leaving time is less than the arrival time
         if(current_leave_time < current_arrival_time)
         {
-            std::cerr << "Packet " << packet->get_id() << " from slice " << current_slice_id
-                      << " has a leave time less than its arrival time." << std::endl;
+            std::cerr << "\033[1;33m" << "\tPacket " << packet->get_id() << " from slice " << current_slice_id
+                      << " has a leave time less than its arrival time." << "\033[0m" << std::endl;
+
             return false;
         }
 
@@ -124,8 +125,8 @@ bool Scheduler::check_sequence() const
         {
             if(current_leave_time < last_leave_time)
             {
-                std::cerr << "Packet " << packet->get_id() << " from slice " << current_slice_id
-                          << " leaves out of order." << std::endl;
+                std::cerr << "\033[1;33m" << "\tPacket " << packet->get_id() << " from slice " << current_slice_id
+                          << " leaves out of order." << "\033[0m" << std::endl;
                 return false;
             }
         }
@@ -136,4 +137,25 @@ bool Scheduler::check_sequence() const
     }
 
     return true; // The sequence is valid
+}
+
+float Scheduler::calculate_score() const
+{
+    float score = 0.0f;
+    float biggest_delay = 0.0f;
+
+    for(const auto& slice: slices)
+    {
+        biggest_delay = std::max(biggest_delay, static_cast<float>(slice->get_biggest_delay()));
+    }
+
+    for(const auto& slice: slices)
+    {
+        float f = slice->get_biggest_delay() <= slice->get_max_delay() ? 1.0f : 0.0f;
+        score += f / slice_count;
+    }
+
+    score += 10000.f / biggest_delay;
+
+    return score;
 }

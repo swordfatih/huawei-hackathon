@@ -20,6 +20,7 @@ public:
     int                                   get_biggest_delay() const;
     int                                   total_size() const;
     int                                   deadline_time() const;
+    int                                   get_max_delay() const;
 
 private:
     int                                  id;        ///< slice id

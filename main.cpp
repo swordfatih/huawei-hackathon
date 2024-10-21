@@ -32,21 +32,23 @@ void check_test_cases(const std::string& input_directory, const std::string& out
             // Create the output file path in the output directory
             std::string   output_file_path = output_directory + "/" + filename + "_output.txt";
             std::ofstream output_file(output_file_path);
+
             if(!output_file.is_open())
             {
-                std::cerr << "Failed to open output file: " << output_file_path << std::endl;
+                std::cerr << "\033[1;33m" << "Failed to open output file: " << output_file_path << "\033[0m" << std::endl;
                 continue;
             }
 
             // Write the scheduler result (to_string) to the output file
             output_file << scheduler.to_string();
+
             if(scheduler.check_sequence())
             {
-                std::cerr << " Test Passed" << std::endl;
+                std::cerr << "\033[1;32m" << "Test " << "\033[0m" << filename << "\033[1;32m" << " passed with score " << scheduler.calculate_score() << "\033[0m" << std::endl;
             }
             else
             {
-                std::cerr << "Test Failed" << std::endl;
+                std::cerr << "\033[1;31m" << "Test " << "\033[0m" << filename << "\033[1;31m" " failed" << "\033[0m" << std::endl;
             }
         }
     }

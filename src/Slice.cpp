@@ -57,3 +57,8 @@ int Slice::deadline_time() const
 {
     return total_size() / (0.95 * bandwidth) - packets[0]->get_arrival();
 }
+
+int Slice::get_max_delay() const
+{
+    return max_delay;
+}
