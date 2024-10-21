@@ -20,6 +20,7 @@ std::shared_ptr<Packet> Slice::next()
             return packet;
         }
     }
+
     return nullptr;
 }
 

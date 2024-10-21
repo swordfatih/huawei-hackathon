@@ -12,18 +12,14 @@ Scheduler::Scheduler(std::istream& in)
     }
 }
 
-std::vector<std::shared_ptr<Packet>> Scheduler::get_arrivals()
+std::vector<std::shared_ptr<Packet>> Scheduler::get_arrivals(std::queue<std::shared_ptr<Packet>>& input, int time)
 {
     std::vector<std::shared_ptr<Packet>> arrivals;
 
-    for(auto& slice: slices)
+    while(!input.empty() && input.front()->get_arrival() <= time)
     {
-        auto packet = slice->next();
-
-        if(packet)
-        {
-            arrivals.emplace_back(packet);
-        }
+        arrivals.emplace_back(input.front());
+        input.pop();
     }
 
     return arrivals;
@@ -41,6 +37,7 @@ void Scheduler::prioritize(std::vector<std::shared_ptr<Packet>>& packets)
             }
             return a->get_slice()->deadline_time() < b->get_slice()->deadline_time();
         }
+
         return a->get_arrival() < b->get_arrival();
     });
 }
@@ -69,20 +66,35 @@ std::vector<std::shared_ptr<Packet>> Scheduler::get_all_packets()
         packets.insert(packets.end(), slice->get_packets().begin(), slice->get_packets().end());
     }
 
+    std::sort(packets.begin(), packets.end(), [](const std::shared_ptr<Packet>& a, const std::shared_ptr<Packet>& b)
+    {
+        return a->get_arrival() < b->get_arrival();
+    });
+
     return packets;
 }
 
 void Scheduler::schedule()
 {
-    std::vector<std::shared_ptr<Packet>> all = get_all_packets();
+    std::queue<std::shared_ptr<Packet>> input;
 
-    int time = 0, count = 0;
-
-    while(sequence.size() < all.size())
+    for(auto& packet: get_all_packets())
     {
-        auto arrivals = get_arrivals();
-        prioritize(arrivals);
-        send(time, arrivals);
+        input.push(packet);
+    }
+
+    int time = 0;
+    while(!input.empty())
+    {
+        if(auto arrivals = get_arrivals(input, time); arrivals.empty())
+        {
+            time = input.front()->get_arrival();
+        }
+        else
+        {
+            prioritize(arrivals);
+            send(time, arrivals);
+        }
     }
 }
 
@@ -143,9 +155,9 @@ bool Scheduler::check_bandwidth() const
 {
     for(const auto& slice: slices)
     {
-        int slice_size = slice->total_size();
-        int first_arrival = slice->get_packets()[0]->get_arrival();
-        int last_leave = slice->get_packets().back()->get_leave();
+        int   slice_size = slice->total_size();
+        int   first_arrival = slice->get_packets()[0]->get_arrival();
+        int   last_leave = slice->get_packets().back()->get_leave();
         float slice_bandwidth = slice->get_bandwidth();
         float delay = last_leave - first_arrival;
 

@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <memory>
+#include <queue>
 #include <vector>
 
 class Packet;
@@ -13,7 +14,7 @@ class Scheduler
 public:
     Scheduler(std::istream& in);
 
-    std::vector<std::shared_ptr<Packet>> get_arrivals();
+    std::vector<std::shared_ptr<Packet>> get_arrivals(std::queue<std::shared_ptr<Packet>>& input, int time);
     void                                 prioritize(std::vector<std::shared_ptr<Packet>>& packets);
     void                                 send(int& time, std::vector<std::shared_ptr<Packet>>& packets);
     std::vector<std::shared_ptr<Packet>> get_all_packets();
