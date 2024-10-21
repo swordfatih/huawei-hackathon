@@ -35,12 +35,17 @@ int Slice::get_id() const
 
 int Slice::get_biggest_delay() const
 {
-    auto element = std::max_element(packets.begin(), packets.end(), [](const std::shared_ptr<Packet>& a, const std::shared_ptr<Packet>& b)
-    {
-        return a->get_delay() < b->get_delay();
-    });
+    int biggest_delay = 0;
 
-    return (*element)->get_delay();
+    for(auto& packet: packets)
+    {
+        if(packet->get_delay() > biggest_delay)
+        {
+            biggest_delay = packet->get_delay();
+        }
+    }
+
+    return biggest_delay;
 }
 
 int Slice::total_size() const
