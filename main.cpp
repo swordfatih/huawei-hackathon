@@ -60,11 +60,12 @@ int main(int argc, char* argv[])
     // Command line arguments for input and output directories
     for(int i = 1; i < argc; i++)
     {
-        if(std::string(argv[i]) == "-input")
+        std::string arg = argv[i];
+        if(arg == "-i" || arg == "--input" || arg == "-input")
         {
             input_directory = argv[i + 1];
         }
-        else if(std::string(argv[i]) == "-output")
+        else if(arg == "-o" || arg == "--output" || arg == "-output")
         {
             output_directory = argv[i + 1];
         }
@@ -72,12 +73,16 @@ int main(int argc, char* argv[])
 
     if(input_directory.empty() || output_directory.empty())
     {
-        std::cerr << "Usage: " << argv[0] << " -input <input_directory> -output <output_directory>" << std::endl;
-        return 1;
+        // Process the input from standard input and output to standard output
+        Scheduler scheduler(std::cin);
+        scheduler.schedule();
+        std::cout << scheduler.to_string();
     }
-
-    // Check test cases in the specified directory and log results
-    check_test_cases(input_directory, output_directory);
+    else
+    {
+        // Check test cases in the specified directory and log results
+        check_test_cases(input_directory, output_directory);
+    }
 
     return 0;
 }
