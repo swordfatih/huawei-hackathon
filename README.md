@@ -5,7 +5,8 @@
 1. Compile
 
 ```bash
-g++ ./main.cpp -o scheduler -Werror --std=c++11
+python ./merge.py
+g++ ./merged.cpp -o scheduler -Werror --std=c++11
 ```
 
 2. Run
