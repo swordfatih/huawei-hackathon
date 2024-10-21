@@ -67,3 +67,8 @@ int Slice::get_max_delay() const
 {
     return max_delay;
 }
+
+float Slice::get_bandwidth() const
+{
+    return bandwidth;
+}

@@ -114,7 +114,7 @@ bool Scheduler::check_sequence() const
         // Check if the leaving time is less than the arrival time
         if(current_leave_time < current_arrival_time)
         {
-            std::cerr << "\033[1;33m" << "\tPacket " << packet->get_id() << " from slice " << current_slice_id
+            std::cerr << "\033[1;33m" << "\t[Early leave] Packet " << packet->get_id() << " from slice " << current_slice_id
                       << " has a leave time less than its arrival time." << "\033[0m" << std::endl;
 
             return false;
@@ -125,7 +125,7 @@ bool Scheduler::check_sequence() const
         {
             if(current_leave_time < last_leave_time)
             {
-                std::cerr << "\033[1;33m" << "\tPacket " << packet->get_id() << " from slice " << current_slice_id
+                std::cerr << "\033[1;33m" << "\t[Order] Packet " << packet->get_id() << " from slice " << current_slice_id
                           << " leaves out of order." << "\033[0m" << std::endl;
                 return false;
             }
@@ -137,6 +137,26 @@ bool Scheduler::check_sequence() const
     }
 
     return true; // The sequence is valid
+}
+
+bool Scheduler::check_bandwidth() const
+{
+    for(const auto& slice: slices)
+    {
+        int slice_size = slice->total_size();
+        int first_arrival = slice->get_packets()[0]->get_arrival();
+        int last_leave = slice->get_packets().back()->get_leave();
+        float slice_bandwidth = slice->get_bandwidth();
+        float delay = last_leave - first_arrival;
+
+        if(slice_size / delay < (0.95 * slice_bandwidth))
+        {
+            std::cerr << "\033[1;33m" << "\t[Bandwidth] Slice " << slice->get_id() << " has a bandwidth violation." << "\033[0m" << std::endl;
+            return false;
+        }
+    }
+
+    return true;
 }
 
 float Scheduler::calculate_score() const

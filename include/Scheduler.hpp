@@ -21,6 +21,7 @@ public:
     std::string                          to_string() const;
     bool                                 check_sequence() const;
     float                                calculate_score() const;
+    bool                                 check_bandwidth() const;
 
 private:
     int                                  slice_count = 0;    ///< number of slice users
