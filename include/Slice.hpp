@@ -21,6 +21,7 @@ public:
     int                                   total_size() const;
     int                                   deadline_time() const;
     int                                   get_max_delay() const;
+    float                                 get_bandwidth() const;
 
 private:
     int                                  id;        ///< slice id
