@@ -4,6 +4,8 @@
 #include <iostream>
 #include <memory>
 #include <vector>
+#include <string>
+#include <algorithm>
 
 class Packet; // Forward declaration
 

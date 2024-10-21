@@ -16,7 +16,7 @@ add_library(slice src/Slice.cpp)
 add_executable(target main.cpp)
 
 # Link libraries
-target_link_libraries(target PUBLIC slice packet scheduler)
+target_link_libraries(target PUBLIC scheduler packet slice)
 
 
 
