@@ -38,6 +38,13 @@ void check_test_cases(const std::string& input_directory, const std::string& out
 
             // Write the scheduler result (to_string) to the output file
             output_file << scheduler.to_string();
+            if (scheduler.check_sequence()) {
+                std::cerr << "Yay" << std::endl;
+            } else {
+                std::cerr << "Nay" << std::endl;
+            }
+            
+            
         }
     }
 }
