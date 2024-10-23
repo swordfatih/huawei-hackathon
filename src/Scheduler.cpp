@@ -29,16 +29,12 @@ void Scheduler::prioritize(std::vector<std::shared_ptr<Packet>>& packets)
 {
     std::sort(packets.begin(), packets.end(), [](const std::shared_ptr<Packet>& a, const std::shared_ptr<Packet>& b)
     {
-        if(a->get_arrival() == b->get_arrival())
-        {
-            if(a->get_slice()->deadline_time() == b->get_slice()->deadline_time())
-            {
-                return a->get_slice()->get_biggest_delay() > b->get_slice()->get_biggest_delay();
-            }
-            return a->get_slice()->deadline_time() < b->get_slice()->deadline_time();
-        }
+        return a->get_size() < b->get_size();
+    });
 
-        return a->get_arrival() < b->get_arrival();
+    std::stable_sort(packets.begin(), packets.end(), [](const std::shared_ptr<Packet>& a, const std::shared_ptr<Packet>& b)
+    {
+        return a->get_id() < b->get_id();
     });
 }
 
