@@ -42,7 +42,9 @@ void check_test_cases(const std::string& input_directory, const std::string& out
             // Write the scheduler result (to_string) to the output file
             output_file << scheduler.to_string();
 
-            if(scheduler.check_sequence())
+            bool sequence = scheduler.check_sequence();
+            bool bandwidth = scheduler.check_bandwidth();
+            if(sequence && bandwidth)
             {
                 std::cerr << "\033[1;32m" << "Test " << "\033[0m" << filename << "\033[1;32m" << " passed with score " << scheduler.calculate_score() << "\033[0m" << std::endl;
             }

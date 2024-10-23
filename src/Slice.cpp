@@ -20,6 +20,7 @@ std::shared_ptr<Packet> Slice::next()
             return packet;
         }
     }
+
     return nullptr;
 }
 
@@ -66,4 +67,9 @@ int Slice::deadline_time() const
 int Slice::get_max_delay() const
 {
     return max_delay;
+}
+
+float Slice::get_bandwidth() const
+{
+    return bandwidth;
 }
